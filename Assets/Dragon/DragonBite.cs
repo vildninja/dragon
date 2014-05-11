@@ -18,7 +18,7 @@ public class DragonBite : MonoBehaviour {
                 dp.spawner.Hit(damage);
             }
             damage = 0;
-            Destroy(gameObject);
+            spawner.StopBite();
         }
     }
 }

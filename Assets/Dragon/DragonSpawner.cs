@@ -11,6 +11,7 @@ public class DragonSpawner : MonoBehaviour {
     public ParticleSystem bloodParticles;
     public ParticleSystem fatalBoodParticles;
     public ParticleSystem biteFx;
+    public ParticleSystem biteCharged;
 
     private Rigidbody2D biggest;
     private Rigidbody2D head;
@@ -101,6 +102,9 @@ public class DragonSpawner : MonoBehaviour {
         biteFx = Instantiate(biteFx, last.transform.position + new Vector3(0, 0, -1), Quaternion.identity) as ParticleSystem;
         biteFx.transform.parent = last.transform;
         biteFx.enableEmission = false;
+        biteCharged = Instantiate(biteCharged, last.transform.position + new Vector3(0, 0, -1), Quaternion.identity) as ParticleSystem;
+        biteCharged.transform.parent = last.transform;
+        biteCharged.enableEmission = false;
 
         head = last.rigidbody2D;
 	}
@@ -109,6 +113,8 @@ public class DragonSpawner : MonoBehaviour {
     {
         health -= damage;
 
+        StopBite();
+        chargeCooldown = 4;
         StartCoroutine(SlowMo());
 
         if (health <= 0)
@@ -189,8 +195,7 @@ public class DragonSpawner : MonoBehaviour {
     }
 
     bool mayFlap = true;
-    bool isCharging = false;
-    float chargeCooldown = 2;
+    float chargeCooldown = 5;
 
     void Update()
     {
@@ -199,10 +204,21 @@ public class DragonSpawner : MonoBehaviour {
             if (leftStick.sqrMagnitude < 0.5f)
                 mayFlap = true;
 
-            if (Input.GetAxis("FireRight" + (player2 ? "2" : "")) > 0.5f && !isCharging)
+            if (Input.GetAxis("FireRight" + (player2 ? "2" : "")) > 0.5f && chargeCooldown < 0)
             {
                 StartCoroutine(Charge());
             }
+
+            if (chargeCooldown < 0)
+            {
+                biteCharged.enableEmission = true;
+            }
+            else
+            {
+                biteCharged.enableEmission = false;
+            }
+
+            chargeCooldown -= Time.deltaTime;
 
             if (Mathf.Abs(headGfxTransform.up.y) > 0.2f)
             {
@@ -213,9 +229,16 @@ public class DragonSpawner : MonoBehaviour {
         }
     }
 
+    public void StopBite()
+    {
+        biteFx.enableEmission = false;
+        if (GetComponentInChildren<DragonBite>())
+            Destroy(GetComponentInChildren<DragonBite>());
+    }
+
     IEnumerator Charge()
     {
-        isCharging = true;
+        chargeCooldown = 3;
         biteFx.enableEmission = true;
         head.AddForce(rightStick * swimForce * 100);
 
@@ -232,23 +255,12 @@ public class DragonSpawner : MonoBehaviour {
         for (float t = 0; t < 0.3f; t += Time.fixedDeltaTime)
         {
             yield return new WaitForFixedUpdate();
+            if (!bite)
+                continue;
             head.AddForce(rightStick * swimForce * 10);
         }
 
-        if (biteFx)
-            biteFx.enableEmission = false;
-        if (db)
-            db.damage = 10.1f;
-
-        yield return new WaitForSeconds(.2f);
-
-
-        if (db)
-            Destroy(db.gameObject);
-
-        yield return new WaitForSeconds(1);
-
-        isCharging = false;
+        StopBite();
     }
 
     // Update is called once per frame
