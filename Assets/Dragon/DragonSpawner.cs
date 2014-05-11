@@ -114,7 +114,7 @@ public class DragonSpawner : MonoBehaviour {
         health -= damage;
 
         StopBite();
-        chargeCooldown = 4;
+        chargeCooldown = 3;
         StartCoroutine(SlowMo());
 
         if (health <= 0)
@@ -238,7 +238,7 @@ public class DragonSpawner : MonoBehaviour {
 
     IEnumerator Charge()
     {
-        chargeCooldown = 3;
+        chargeCooldown = 4;
         biteFx.enableEmission = true;
         head.AddForce(rightStick * swimForce * 100);
 
