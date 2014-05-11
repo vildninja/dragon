@@ -190,6 +190,7 @@ public class DragonSpawner : MonoBehaviour {
 
     bool mayFlap = true;
     bool isCharging = false;
+    float chargeCooldown = 2;
 
     void Update()
     {
