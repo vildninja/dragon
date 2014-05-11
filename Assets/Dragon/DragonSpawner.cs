@@ -9,6 +9,7 @@ public class DragonSpawner : MonoBehaviour {
     public Sprite piece;
     public Sprite headGfx;
     public ParticleSystem bloodParticles;
+    public ParticleSystem fatalBoodParticles;
     public ParticleSystem biteFx;
 
     private Rigidbody2D biggest;
@@ -63,8 +64,6 @@ public class DragonSpawner : MonoBehaviour {
 
             next.layer = gameObject.layer;
 
-            next.GetComponent<DragonPiece>().spawner = this;
-
             var g = new GameObject("gfx", typeof(SpriteRenderer));
             g.GetComponent<SpriteRenderer>().sprite = piece;
             g.transform.parent = next.transform;
@@ -113,7 +112,36 @@ public class DragonSpawner : MonoBehaviour {
         StartCoroutine(SlowMo());
 
         if (health <= 0)
-            Destroy(gameObject);
+        {
+            foreach (var hj in GetComponentsInChildren<HingeJoint2D>())
+            {
+                if (Random.value < 0.3f)
+                {
+                    Destroy(hj);
+                    var p = Instantiate(fatalBoodParticles, hj.transform.position, Quaternion.identity) as ParticleSystem;
+                    p.transform.parent = hj.transform;
+                }
+            }
+
+            foreach (var dp in GetComponentsInChildren<DragonPiece>())
+            {
+                dp.rigidbody2D.drag = 0.1f;
+                Destroy(dp.GetComponentInChildren<ParticleSystem>());
+                Destroy(dp);
+            }
+            StartCoroutine(Restart());
+        }
+    }
+
+    bool isRestarting = false;
+    IEnumerator Restart()
+    {
+        if (!isRestarting)
+        {
+            isRestarting = true;
+            yield return new WaitForSeconds(8);
+            Application.LoadLevel(Application.loadedLevel);
+        }
     }
 
     static int slowMoCounter = 0;
@@ -122,6 +150,9 @@ public class DragonSpawner : MonoBehaviour {
     {
         slowMoCounter++;
         Time.timeScale = 0.4f;
+        GameObject.Find("/Flash").renderer.enabled = true;
+        yield return new WaitForSeconds(0.05f);
+        GameObject.Find("/Flash").renderer.enabled = false;
         yield return new WaitForSeconds(0.5f);
         slowMoCounter--;
         if (slowMoCounter == 0)
@@ -162,21 +193,23 @@ public class DragonSpawner : MonoBehaviour {
 
     void Update()
     {
-        if (leftStick.sqrMagnitude < 0.5f)
-            mayFlap = true;
-
-        if (Input.GetAxis("FireRight" + (player2 ? "2" : "")) > 0.5f && !isCharging)
+        if (health > 0)
         {
-            StartCoroutine(Charge());
-        }
+            if (leftStick.sqrMagnitude < 0.5f)
+                mayFlap = true;
 
-        if (Mathf.Abs(headGfxTransform.up.y) > 0.2f)
-        {
-            var s = headGfxTransform.localScale;
-            s.y = s.x * Mathf.Sign(headGfxTransform.up.y);
-            headGfxTransform.localScale = s;
-        }
+            if (Input.GetAxis("FireRight" + (player2 ? "2" : "")) > 0.5f && !isCharging)
+            {
+                StartCoroutine(Charge());
+            }
 
+            if (Mathf.Abs(headGfxTransform.up.y) > 0.2f)
+            {
+                var s = headGfxTransform.localScale;
+                s.y = s.x * Mathf.Sign(headGfxTransform.up.y);
+                headGfxTransform.localScale = s;
+            }
+        }
     }
 
     IEnumerator Charge()
@@ -201,7 +234,8 @@ public class DragonSpawner : MonoBehaviour {
             head.AddForce(rightStick * swimForce * 10);
         }
 
-        biteFx.enableEmission = false;
+        if (biteFx)
+            biteFx.enableEmission = false;
         if (db)
             db.damage = 10.1f;
 
@@ -216,26 +250,27 @@ public class DragonSpawner : MonoBehaviour {
         isCharging = false;
     }
 
-    DragonBite tailSwing = null;
-
     // Update is called once per frame
     void FixedUpdate()
     {
-        Vector2 wingInput = leftStick;
-        if (mayFlap && wingInput.sqrMagnitude > 0.7f)
+        if (health > 0)
         {
-            mayFlap = false;
-            biggest.AddForce(Vector3.Project(wingInput, biggest.transform.up).normalized * wingForce);
-        }
+            Vector2 wingInput = leftStick;
+            if (mayFlap && wingInput.sqrMagnitude > 0.7f)
+            {
+                mayFlap = false;
+                biggest.AddForce(wingInput * wingForce);
+            }
 
-        Vector2 swim = rightStick;
-        if (swim.sqrMagnitude > 0.5f)
-        {
-            float a = Vector2.Angle(swim, head.transform.right);
-            a *= Mathf.Sign(Vector3.Cross(head.transform.right, swim).z);
+            Vector2 swim = rightStick;
+            if (swim.sqrMagnitude > 0.5f)
+            {
+                float a = Vector2.Angle(swim, head.transform.right);
+                a *= Mathf.Sign(Vector3.Cross(head.transform.right, swim).z);
 
-            head.AddTorque(a);
-            head.AddForce(head.transform.right * swimForce);
+                head.AddTorque(a);
+                head.AddForce(head.transform.right * swimForce);
+            }
         }
 
         //if (tail.velocity.sqrMagnitude > minTailSpeed)

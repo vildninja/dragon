@@ -12,8 +12,11 @@ public class DragonBite : MonoBehaviour {
         var dp = col.GetComponent<DragonPiece>();
         if (dp && dp.spawner != spawner)
         {
-            dp.hit = true;
-            dp.spawner.Hit(damage);
+            if (spawner.health > 0)
+            {
+                dp.hit = true;
+                dp.spawner.Hit(damage);
+            }
             damage = 0;
             Destroy(gameObject);
         }

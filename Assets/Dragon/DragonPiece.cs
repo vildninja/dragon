@@ -13,6 +13,7 @@ public class DragonPiece : MonoBehaviour {
 
     void Start()
     {
+        spawner = transform.parent.GetComponent<DragonSpawner>();
         blood = GetComponentInChildren<ParticleSystem>();
         blood.transform.forward = transform.right + (Random.value > 0.5f ? transform.up : -transform.up);
     }
