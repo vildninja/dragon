@@ -10,7 +10,7 @@ public class DragonBite : MonoBehaviour {
     void OnTriggerEnter2D(Collider2D col)
     {
         var dp = col.GetComponent<DragonPiece>();
-        if (dp && dp.spawner != spawner)
+        if (dp && damage > 0 && dp.spawner != spawner)
         {
             if (spawner.health > 0)
             {
@@ -18,6 +18,7 @@ public class DragonBite : MonoBehaviour {
                 dp.spawner.Hit(damage);
             }
             damage = 0;
+            col.rigidbody2D.AddForce(rigidbody2D.velocity.normalized * 10000);
             spawner.StopBite();
         }
     }

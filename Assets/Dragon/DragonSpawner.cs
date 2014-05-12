@@ -30,6 +30,8 @@ public class DragonSpawner : MonoBehaviour {
 
     Transform headGfxTransform;
 
+    float deathColor = 1;
+
 	// Use this for initialization
 	void Awake () {
 
@@ -117,6 +119,8 @@ public class DragonSpawner : MonoBehaviour {
         chargeCooldown = 3;
         StartCoroutine(SlowMo());
 
+        deathColor = 0;
+
         if (health <= 0)
         {
             foreach (var hj in GetComponentsInChildren<HingeJoint2D>())
@@ -199,6 +203,7 @@ public class DragonSpawner : MonoBehaviour {
 
     void Update()
     {
+        print("FR " + Input.GetAxis("FireRight"));
         if (health > 0)
         {
             if (leftStick.sqrMagnitude < 0.5f)
@@ -226,6 +231,13 @@ public class DragonSpawner : MonoBehaviour {
                 s.y = s.x * Mathf.Sign(headGfxTransform.up.y);
                 headGfxTransform.localScale = s;
             }
+        }
+
+        if (deathColor < 1)
+        {
+            deathColor += Time.deltaTime;
+            foreach (var s in GetComponentsInChildren<SpriteRenderer>())
+                s.color = new Color(1, deathColor, deathColor);
         }
     }
 
