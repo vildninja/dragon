@@ -18,7 +18,8 @@ public class DragonBite : MonoBehaviour {
                 dp.spawner.Hit(damage);
             }
             damage = 0;
-            col.rigidbody2D.AddForce(rigidbody2D.velocity.normalized * 10000);
+
+            col.rigidbody2D.AddForce(transform.parent.rigidbody2D.velocity.normalized * 10000);
             spawner.StopBite();
         }
     }
